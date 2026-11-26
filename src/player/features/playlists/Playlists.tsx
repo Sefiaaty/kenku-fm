@@ -55,13 +55,15 @@ type PlaylistsProps = {
   onPlay: (track: Track) => void;
   /** The playlist open beside the grid, when the screen is split */
   selectedId?: string;
+  /** Shown beside an open playlist instead of on its own */
+  embedded?: boolean;
 };
 
-export function Playlists({ onPlay, selectedId }: PlaylistsProps) {
+export function Playlists({ onPlay, selectedId, embedded }: PlaylistsProps) {
   const navigate = useNavigate();
   const prefs = usePrefs();
   const size = cardSizes[prefs.cardSize];
-  const split = Boolean(selectedId);
+  const split = Boolean(embedded);
 
   function handleSelect(id: string) {
     // Inside the split view, swap the open playlist without piling up history
@@ -142,13 +144,9 @@ export function Playlists({ onPlay, selectedId }: PlaylistsProps) {
           justifyContent="space-between"
           alignItems="center"
         >
-          {split ? (
-            <Box sx={{ width: 40, mr: "40px" }} />
-          ) : (
-            <IconButton onClick={() => navigate(-1)} sx={{ mr: "40px" }}>
-              <Back />
-            </IconButton>
-          )}
+          <IconButton onClick={() => navigate(-1)} sx={{ mr: "40px" }}>
+            <Back />
+          </IconButton>
           <Typography variant={split ? "h4" : "h3"} noWrap>
             Playlists
           </Typography>

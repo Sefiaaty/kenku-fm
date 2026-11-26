@@ -11,7 +11,6 @@ import { usePlaylistPlayback } from "../features/playlists/usePlaylistPlayback";
 import { PlaylistMediaSession } from "../features/playlists/PlaylistMediaSession";
 import { PlaylistRemote } from "../features/playlists/PlaylistRemote";
 import { PlaylistPlaybackSync } from "../features/playlists/PlaylistPlaybackSync";
-import { Playlists } from "../features/playlists/Playlists";
 import { PlaylistSplit } from "../features/playlists/PlaylistSplit";
 
 import "../../renderer/app/App.css";
@@ -54,11 +53,7 @@ export function App() {
           }
         />
         <Route
-          path="playlists"
-          element={<Playlists onPlay={playlist.play} />}
-        />
-        <Route
-          path="playlists/:playlistId"
+          path="playlists/:playlistId?"
           element={<PlaylistSplit onPlay={playlist.play} />}
         />
         <Route

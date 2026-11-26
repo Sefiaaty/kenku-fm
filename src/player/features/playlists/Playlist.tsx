@@ -34,12 +34,16 @@ type PlaylistProps = {
   onPlay: (track: Track) => void;
   /** Shown beside the playlist grid instead of on its own screen */
   embedded?: boolean;
+  /** Show this playlist instead of the one in the address */
+  id?: string;
+  /** Called by the close button when shown beside the grid */
+  onClose?: () => void;
 };
 
-export function Playlist({ onPlay, embedded }: PlaylistProps) {
+export function Playlist({ onPlay, embedded, id, onClose }: PlaylistProps) {
   const playlists = useSelector((state: RootState) => state.playlists);
   const { playlistId } = useParams();
-  const playlist = playlists.playlists.byId[playlistId];
+  const playlist = playlists.playlists.byId[id ?? playlistId];
 
   if (!playlist) {
     return null;
@@ -51,6 +55,7 @@ export function Playlist({ onPlay, embedded }: PlaylistProps) {
       playlist={playlist}
       onPlay={onPlay}
       embedded={embedded}
+      onClose={onClose}
     />
   );
 }
@@ -58,6 +63,7 @@ export function Playlist({ onPlay, embedded }: PlaylistProps) {
 function PlaylistView({
   onPlay,
   embedded,
+  onClose,
   playlist,
 }: PlaylistProps & { playlist: PlaylistData }) {
   const dispatch = useDispatch();
@@ -94,7 +100,11 @@ function PlaylistView({
 
   function handleDelete() {
     dispatch(removePlaylist(playlist.id));
-    navigate(-1);
+    if (embedded) {
+      navigate("/playlists", { replace: true });
+    } else {
+      navigate(-1);
+    }
     handleMenuClose();
   }
 
@@ -166,11 +176,21 @@ function PlaylistView({
           alignItems="center"
           sx={{ zIndex: 1 }}
         >
-          <Tooltip title={embedded ? "Close" : "Back"}>
+          {embedded ? (
+            onClose ? (
+              <Tooltip title="Close">
+                <IconButton onClick={onClose} sx={{ mr: "40px" }}>
+                  <Close />
+                </IconButton>
+              </Tooltip>
+            ) : (
+              <Box sx={{ width: 40, mr: "40px" }} />
+            )
+          ) : (
             <IconButton onClick={() => navigate(-1)} sx={{ mr: "40px" }}>
-              {embedded ? <Close /> : <Back />}
+              <Back />
             </IconButton>
-          </Tooltip>
+          )}
           <Typography sx={{ zIndex: 1 }} variant={embedded ? "h4" : "h3"} noWrap>
             {playlist.title}
           </Typography>
