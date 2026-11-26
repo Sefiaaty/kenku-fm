@@ -12,7 +12,7 @@ import { PlaylistMediaSession } from "../features/playlists/PlaylistMediaSession
 import { PlaylistRemote } from "../features/playlists/PlaylistRemote";
 import { PlaylistPlaybackSync } from "../features/playlists/PlaylistPlaybackSync";
 import { Playlists } from "../features/playlists/Playlists";
-import { Playlist } from "../features/playlists/Playlist";
+import { PlaylistSplit } from "../features/playlists/PlaylistSplit";
 
 import "../../renderer/app/App.css";
 import { Home } from "../features/home/Home";
@@ -59,7 +59,7 @@ export function App() {
         />
         <Route
           path="playlists/:playlistId"
-          element={<Playlist onPlay={playlist.play} />}
+          element={<PlaylistSplit onPlay={playlist.play} />}
         />
         <Route
           path="soundboards"

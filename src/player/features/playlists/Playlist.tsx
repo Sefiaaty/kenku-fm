@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import Add from "@mui/icons-material/AddCircleRounded";
 import Back from "@mui/icons-material/ChevronLeftRounded";
+import Close from "@mui/icons-material/CloseRounded";
 import MoreVert from "@mui/icons-material/MoreVertRounded";
 import Backdrop from "@mui/material/Backdrop";
 import Box from "@mui/material/Box";
@@ -20,20 +21,48 @@ import { backgrounds, isBackground } from "../../backgrounds";
 import { useFolderDrop } from "../../common/useFolderDrop";
 import { addTracksToQueueIfNeeded, startQueue } from "./playlistPlaybackSlice";
 import { PlaylistSettings } from "./PlaylistSettings";
-import { addTracks, removePlaylist, Track } from "./playlistsSlice";
+import {
+  addTracks,
+  removePlaylist,
+  Track,
+  Playlist as PlaylistData,
+} from "./playlistsSlice";
 import { PlaylistTracks } from "./PlaylistTracks";
 import { TrackAdd } from "./TrackAdd";
 
 type PlaylistProps = {
   onPlay: (track: Track) => void;
+  /** Shown beside the playlist grid instead of on its own screen */
+  embedded?: boolean;
 };
 
-export function Playlist({ onPlay }: PlaylistProps) {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
+export function Playlist({ onPlay, embedded }: PlaylistProps) {
   const playlists = useSelector((state: RootState) => state.playlists);
   const { playlistId } = useParams();
   const playlist = playlists.playlists.byId[playlistId];
+
+  if (!playlist) {
+    return null;
+  }
+
+  return (
+    <PlaylistView
+      key={playlist.id}
+      playlist={playlist}
+      onPlay={onPlay}
+      embedded={embedded}
+    />
+  );
+}
+
+function PlaylistView({
+  onPlay,
+  embedded,
+  playlist,
+}: PlaylistProps & { playlist: PlaylistData }) {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const playlists = useSelector((state: RootState) => state.playlists);
 
   const [addOpen, setAddOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -97,6 +126,7 @@ export function Playlist({ onPlay }: PlaylistProps) {
   return (
     <>
       <Container
+        maxWidth={embedded ? false : "lg"}
         sx={{
           padding: "0px !important",
           display: "flex",
@@ -136,10 +166,12 @@ export function Playlist({ onPlay }: PlaylistProps) {
           alignItems="center"
           sx={{ zIndex: 1 }}
         >
-          <IconButton onClick={() => navigate(-1)} sx={{ mr: "40px" }}>
-            <Back />
-          </IconButton>
-          <Typography sx={{ zIndex: 1 }} variant="h3" noWrap>
+          <Tooltip title={embedded ? "Close" : "Back"}>
+            <IconButton onClick={() => navigate(-1)} sx={{ mr: "40px" }}>
+              {embedded ? <Close /> : <Back />}
+            </IconButton>
+          </Tooltip>
+          <Typography sx={{ zIndex: 1 }} variant={embedded ? "h4" : "h3"} noWrap>
             {playlist.title}
           </Typography>
           <Stack direction="row">

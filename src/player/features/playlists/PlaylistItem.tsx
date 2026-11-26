@@ -14,18 +14,22 @@ import { Playlist, Track } from "./playlistsSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../app/store";
 import { playPause, startQueue } from "./playlistPlaybackSlice";
+import { cardSizes, usePrefs } from "../../common/playerPrefs";
 
 type PlaylistItemProps = {
   playlist: Playlist;
   onSelect: (id: string) => void;
   onPlay: (track: Track) => void;
+  selected?: boolean;
 };
 
 export function PlaylistItem({
   playlist,
   onSelect,
   onPlay,
+  selected,
 }: PlaylistItemProps) {
+  const size = cardSizes[usePrefs().cardSize];
   const playlists = useSelector((state: RootState) => state.playlists);
   const playing = useSelector(
     (state: RootState) =>
@@ -65,7 +69,7 @@ export function PlaylistItem({
       <CardActionArea onClick={() => onSelect(playlist.id)}>
         <CardMedia
           component="img"
-          height="200px"
+          height={`${size.height}px`}
           image={image}
           alt={"Background"}
           sx={{ pointerEvents: "none" }}
@@ -85,7 +89,8 @@ export function PlaylistItem({
       />
       <Box
         sx={{
-          padding: 2,
+          padding: size.height < 150 ? 1 : 2,
+          paddingLeft: 2,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -95,7 +100,17 @@ export function PlaylistItem({
           pointerEvents: "none",
         }}
       >
-        <Typography variant="h5" component="div">
+        <Typography
+          variant={size.title}
+          component="div"
+          lineHeight={1.2}
+          sx={{
+            display: "-webkit-box",
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
           {playlist.title}
         </Typography>
         <IconButton
@@ -110,6 +125,18 @@ export function PlaylistItem({
           )}
         </IconButton>
       </Box>
+      {selected && (
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            border: "3px solid",
+            borderColor: "primary.main",
+            borderRadius: "inherit",
+            pointerEvents: "none",
+          }}
+        />
+      )}
     </Card>
   );
 }

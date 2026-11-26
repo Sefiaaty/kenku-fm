@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
 
 import Container from "@mui/material/Container";
-import Grid from "@mui/material/Grid";
+import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import IconButton from "@mui/material/IconButton";
@@ -37,6 +37,8 @@ import { getRandomBackground } from "../../backgrounds";
 import { useHideScrollbar } from "../../../renderer/common/useHideScrollbar";
 import { useRememberScroll } from "../../../renderer/common/useRememberScroll";
 import { useNavigate } from "react-router-dom";
+import { cardSizes, usePrefs } from "../../common/playerPrefs";
+import { PlayerPrefsButton } from "./PlayerPrefsButton";
 
 const WallPaper = styled("div")({
   position: "absolute",
@@ -51,10 +53,20 @@ const WallPaper = styled("div")({
 
 type PlaylistsProps = {
   onPlay: (track: Track) => void;
+  /** The playlist open beside the grid, when the screen is split */
+  selectedId?: string;
 };
 
-export function Playlists({ onPlay }: PlaylistsProps) {
+export function Playlists({ onPlay, selectedId }: PlaylistsProps) {
   const navigate = useNavigate();
+  const prefs = usePrefs();
+  const size = cardSizes[prefs.cardSize];
+  const split = Boolean(selectedId);
+
+  function handleSelect(id: string) {
+    // Inside the split view, swap the open playlist without piling up history
+    navigate(`/playlists/${id}`, { replace: split });
+  }
   const dispatch = useDispatch();
   const playlists = useSelector((state: RootState) => state.playlists);
 
@@ -114,6 +126,7 @@ export function Playlists({ onPlay }: PlaylistsProps) {
     <>
       <WallPaper />
       <Container
+        maxWidth={false}
         sx={{
           padding: "0px !important",
           display: "flex",
@@ -129,23 +142,31 @@ export function Playlists({ onPlay }: PlaylistsProps) {
           justifyContent="space-between"
           alignItems="center"
         >
-          <IconButton onClick={() => navigate(-1)} sx={{ mr: "40px" }}>
-            <Back />
-          </IconButton>
-          <Typography variant="h3" noWrap>
+          {split ? (
+            <Box sx={{ width: 40, mr: "40px" }} />
+          ) : (
+            <IconButton onClick={() => navigate(-1)} sx={{ mr: "40px" }}>
+              <Back />
+            </IconButton>
+          )}
+          <Typography variant={split ? "h4" : "h3"} noWrap>
             Playlists
           </Typography>
-          <Tooltip title="Add Playlist">
-            <IconButton onClick={() => setAddOpen(true)}>
-              <AddRounded />
-            </IconButton>
-          </Tooltip>
+          <Stack direction="row">
+            <PlayerPrefsButton />
+            <Tooltip title="Add Playlist">
+              <IconButton onClick={() => setAddOpen(true)}>
+                <AddRounded />
+              </IconButton>
+            </Tooltip>
+          </Stack>
         </Stack>
-        <Grid
-          container
-          spacing={2}
-          columns={{ xs: 4, sm: 9, md: 12 }}
+        <Box
           sx={{
+            display: "grid",
+            gridTemplateColumns: `repeat(auto-fill, minmax(${size.minWidth}px, 1fr))`,
+            alignContent: "start",
+            gap: 2,
             px: 2,
             pb: "248px",
             overflowY: "auto",
@@ -163,15 +184,14 @@ export function Playlists({ onPlay }: PlaylistsProps) {
           >
             <SortableContext items={items} strategy={rectSortingStrategy}>
               {items.map((playlist) => (
-                <Grid item xs={2} sm={3} md={3} key={playlist.id}>
-                  <SortableItem id={playlist.id}>
-                    <PlaylistItem
-                      playlist={playlist}
-                      onSelect={(id) => navigate(`/playlists/${id}`)}
-                      onPlay={onPlay}
-                    />
-                  </SortableItem>
-                </Grid>
+                <SortableItem id={playlist.id} key={playlist.id}>
+                  <PlaylistItem
+                    playlist={playlist}
+                    onSelect={handleSelect}
+                    onPlay={onPlay}
+                    selected={playlist.id === selectedId}
+                  />
+                </SortableItem>
               ))}
               <DragOverlay>
                 {dragId ? (
@@ -184,7 +204,7 @@ export function Playlists({ onPlay }: PlaylistsProps) {
               </DragOverlay>
             </SortableContext>
           </DndContext>
-        </Grid>
+        </Box>
         <Backdrop
           open={dragging}
           sx={{ zIndex: 100, bgcolor: "rgba(0, 0, 0, 0.8)" }}

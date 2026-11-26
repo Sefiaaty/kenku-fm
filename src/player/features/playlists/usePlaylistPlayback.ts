@@ -11,10 +11,17 @@ import {
   stopTrack,
 } from "./playlistPlaybackSlice";
 import { Track } from "./playlistsSlice";
+import { getPrefs } from "../../common/playerPrefs";
 
 export function usePlaylistPlayback(onError: (message: string) => void) {
   const trackRef = useRef<Howl | null>(null);
   const animationRef = useRef<number | null>(null);
+  // Which playlist the current track came from, to know when we switch playlists
+  const playlistIdRef = useRef<string | null>(null);
+  // Changes every time we pause or resume, so an old fade-out can't pause new music
+  const pauseTokenRef = useRef(0);
+  // The track that is fading out because of a pause
+  const fadingOutRef = useRef<Howl | null>(null);
 
   const playlists = useSelector((state: RootState) => state.playlists);
   const store = useStore<RootState>();
@@ -34,6 +41,10 @@ export function usePlaylistPlayback(onError: (message: string) => void) {
   const play = useCallback(
     (track: Track) => {
       let prevTrack = trackRef.current;
+      const prevPlaylistId = playlistIdRef.current;
+      const nextPlaylistId =
+        store.getState().playlistPlayback.queue?.playlistId ?? null;
+      playlistIdRef.current = nextPlaylistId;
       function removePrevTrack() {
         if (prevTrack) {
           prevTrack.unload();
@@ -64,9 +75,17 @@ export function usePlaylistPlayback(onError: (message: string) => void) {
             })
           );
           // Fade out previous track and fade in new track
+          // Starting a different playlist uses the longer fade from the settings
           if (prevTrack) {
-            prevTrack.fade(prevTrack.volume(), 0, 1000);
-            prevTrack.once("fade", removePrevTrack);
+            const switching =
+              prevPlaylistId !== null && prevPlaylistId !== nextPlaylistId;
+            const fadeOut = switching ? getPrefs().switchFade * 1000 : 1000;
+            if (fadeOut > 0 && prevTrack.playing()) {
+              prevTrack.fade(prevTrack.volume(), 0, fadeOut);
+              prevTrack.once("fade", removePrevTrack);
+            } else {
+              removePrevTrack();
+            }
           }
           howl.fade(0, store.getState().playlistPlayback.volume, 1000);
           // Update playback
@@ -246,15 +265,46 @@ export function usePlaylistPlayback(onError: (message: string) => void) {
     };
   }, [repeat, queue, shuffle, playbackTrack, playlists, play, seek, stop]);
 
-  const pauseResume = useCallback((resume: boolean) => {
-    if (trackRef.current) {
-      if (resume) {
-        trackRef.current.play();
-      } else {
-        trackRef.current.pause();
+  const pauseResume = useCallback(
+    (resume: boolean) => {
+      const howl = trackRef.current;
+      if (!howl) {
+        return;
       }
-    }
-  }, []);
+      const token = ++pauseTokenRef.current;
+      const volume = store.getState().playlistPlayback.volume;
+      if (resume) {
+        if (fadingOutRef.current === howl) {
+          // Resumed during the fade-out: cancel it and go back to full volume.
+          // Set twice because cancelling a fade in Howler resets the volume first.
+          fadingOutRef.current = null;
+          howl.volume(volume);
+          howl.volume(volume);
+        }
+        if (!howl.playing()) {
+          howl.play();
+        }
+      } else {
+        const fadeOut = getPrefs().pauseFade * 1000;
+        if (fadeOut <= 0 || !howl.playing()) {
+          howl.pause();
+          return;
+        }
+        fadingOutRef.current = howl;
+        howl.fade(howl.volume(), 0, fadeOut);
+        howl.once("fade", () => {
+          // Only pause if nothing was resumed or changed since this fade began
+          if (pauseTokenRef.current !== token || trackRef.current !== howl) {
+            return;
+          }
+          fadingOutRef.current = null;
+          howl.pause();
+          howl.volume(store.getState().playlistPlayback.volume);
+        });
+      }
+    },
+    [store]
+  );
 
   const mute = useCallback((muted: boolean) => {
     if (trackRef.current) {
