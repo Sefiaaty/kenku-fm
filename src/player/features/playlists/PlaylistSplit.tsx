@@ -18,7 +18,7 @@ type PlaylistSplitProps = {
  */
 export function PlaylistSplit({ onPlay }: PlaylistSplitProps) {
   const { playlistId } = useParams();
-  const wide = useMediaQuery("(min-width: 1000px)");
+  const wide = useMediaQuery("(min-width: 700px)");
 
   if (!wide) {
     return <Playlist onPlay={onPlay} />;
@@ -39,7 +39,7 @@ export function PlaylistSplit({ onPlay }: PlaylistSplitProps) {
       <Box
         sx={{
           flex: "1 1 45%",
-          minWidth: 380,
+          minWidth: 320,
           position: "relative",
           overflow: "hidden",
           borderLeft: "1px solid rgba(255, 255, 255, 0.12)",
