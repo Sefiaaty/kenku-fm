@@ -18,7 +18,10 @@ import PauseRounded from "@mui/icons-material/PauseRounded";
 import PlayArrowRounded from "@mui/icons-material/PlayArrowRounded";
 import PushPin from "@mui/icons-material/PushPin";
 import PushPinOutlined from "@mui/icons-material/PushPinOutlined";
+import RepeatRounded from "@mui/icons-material/RepeatRounded";
+import RepeatOneRounded from "@mui/icons-material/RepeatOneRounded";
 import Search from "@mui/icons-material/Search";
+import ShuffleRounded from "@mui/icons-material/ShuffleRounded";
 import SkipNext from "@mui/icons-material/SkipNext";
 import SkipPrevious from "@mui/icons-material/SkipPrevious";
 import Star from "@mui/icons-material/Star";
@@ -59,6 +62,10 @@ const NEXT = "PLAYER_REMOTE_PLAYLIST_PLAYBACK_NEXT";
 const PREVIOUS = "PLAYER_REMOTE_PLAYLIST_PLAYBACK_PREVIOUS";
 const VOLUME = "PLAYER_REMOTE_PLAYLIST_PLAYBACK_VOLUME";
 const MUTE = "PLAYER_REMOTE_PLAYLIST_PLAYBACK_MUTE";
+const SHUFFLE = "PLAYER_REMOTE_PLAYLIST_PLAYBACK_SHUFFLE";
+const REPEAT = "PLAYER_REMOTE_PLAYLIST_PLAYBACK_REPEAT";
+// Same order as the main player: off, the whole playlist, one track
+const NEXT_REPEAT = { off: "playlist", playlist: "track", track: "off" } as const;
 
 function MiniPlayer() {
   const [playback, setPlayback] = useState<PlaylistPlaybackReply | null>(null);
@@ -135,6 +142,8 @@ function MiniPlayer() {
   const track = playback?.track;
   const volume = dragVolume ?? playback?.volume ?? 1;
   const muted = Boolean(playback?.muted);
+  const shuffled = Boolean(playback?.shuffle);
+  const repeatMode = playback?.repeat ?? "off";
 
   function handleTile(playlist: Playlist) {
     if (playback?.playlist?.id === playlist.id && track) {
@@ -223,8 +232,13 @@ function MiniPlayer() {
             value={track && track.duration ? (track.progress / track.duration) * 100 : 0}
             sx={{ mt: 0.75, height: 3, borderRadius: 2, bgcolor: "rgba(255,255,255,0.12)" }}
           />
-          <Stack className="nodrag" direction="row" alignItems="center" sx={{ mt: 0.25 }}>
-            <IconButton size="small" onClick={() => send(PREVIOUS)} disabled={!track}>
+          <Stack className="nodrag" direction="row" alignItems="center" justifyContent="center" sx={{ mt: 0.25 }}>
+            <Tooltip title={shuffled ? "Shuffle on" : "Shuffle off"}>
+              <IconButton size="small" onClick={() => send(SHUFFLE, !shuffled)} color={shuffled ? "primary" : "default"}>
+                <ShuffleRounded fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <IconButton size="small" onClick={() => send(PREVIOUS)} disabled={!track} sx={{ ml: 0.5 }}>
               <SkipPrevious />
             </IconButton>
             <IconButton
@@ -234,10 +248,17 @@ function MiniPlayer() {
             >
               {playing ? <PauseRounded fontSize="large" /> : <PlayArrowRounded fontSize="large" />}
             </IconButton>
-            <IconButton size="small" onClick={() => send(NEXT)} disabled={!track}>
+            <IconButton size="small" onClick={() => send(NEXT)} disabled={!track} sx={{ mr: 0.5 }}>
               <SkipNext />
             </IconButton>
-            <IconButton size="small" onClick={() => send(MUTE, !muted)} sx={{ ml: 0.5 }}>
+            <Tooltip title={repeatMode === "track" ? "Repeat this track" : repeatMode === "playlist" ? "Repeat the playlist" : "Repeat off"}>
+              <IconButton size="small" onClick={() => send(REPEAT, NEXT_REPEAT[repeatMode])} color={repeatMode === "off" ? "default" : "primary"}>
+                {repeatMode === "track" ? <RepeatOneRounded fontSize="small" /> : <RepeatRounded fontSize="small" />}
+              </IconButton>
+            </Tooltip>
+          </Stack>
+          <Stack className="nodrag" direction="row" alignItems="center" sx={{ pb: 0.5 }}>
+            <IconButton size="small" onClick={() => send(MUTE, !muted)}>
               {muted ? <VolumeOff fontSize="small" /> : <VolumeUp fontSize="small" />}
             </IconButton>
             <Slider
@@ -251,7 +272,7 @@ function MiniPlayer() {
                 window.mini.command(VOLUME, value as number);
               }}
               onChangeCommitted={() => setTimeout(() => setDragVolume(null), 600)}
-              sx={{ mx: 1, flex: 1, minWidth: 40 }}
+              sx={{ mx: 1.5, flex: 1, minWidth: 40 }}
             />
           </Stack>
         </Box>
