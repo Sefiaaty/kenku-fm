@@ -67,6 +67,9 @@ const api = {
   soundboardGetAllReply: (soundboards: SoundboardsReply) => {
     ipcRenderer.send("PLAYER_REMOTE_SOUNDBOARD_GET_ALL_REPLY", soundboards);
   },
+  toggleMiniPlayer: () => {
+    ipcRenderer.send("MINI_PLAYER_TOGGLE");
+  },
   getPathForFile: (file: File) => {
     return webUtils.getPathForFile(file);
   } 

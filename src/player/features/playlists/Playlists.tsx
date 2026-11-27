@@ -39,6 +39,7 @@ import { useRememberScroll } from "../../../renderer/common/useRememberScroll";
 import { useNavigate } from "react-router-dom";
 import { cardSizes, usePrefs } from "../../common/playerPrefs";
 import { PlayerPrefsButton } from "./PlayerPrefsButton";
+import PictureInPictureAltRounded from "@mui/icons-material/PictureInPictureAltRounded";
 
 const WallPaper = styled("div")({
   position: "absolute",
@@ -151,6 +152,11 @@ export function Playlists({ onPlay, selectedId, embedded }: PlaylistsProps) {
             Playlists
           </Typography>
           <Stack direction="row">
+            <Tooltip title="Mini Player (Ctrl+Shift+M)">
+              <IconButton onClick={() => window.player.toggleMiniPlayer()}>
+                <PictureInPictureAltRounded />
+              </IconButton>
+            </Tooltip>
             <PlayerPrefsButton />
             <Tooltip title="Add Playlist">
               <IconButton onClick={() => setAddOpen(true)}>

@@ -35,6 +35,8 @@ export interface PlaylistsReply {
   playlists: {
     tracks: string[];
     background: string;
+    /** The background as a full image address (added for the mini player) */
+    image?: string;
     title: string;
     id: string;
   }[];

@@ -4,6 +4,17 @@ import { Track } from "./playlistsSlice";
 
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../app/store";
+import { backgrounds, isBackground } from "../../backgrounds";
+
+// The playlist picture as a full address, so another window (the mini player) can show it
+function imageOf(background: string) {
+  const image = isBackground(background) ? backgrounds[background] : background;
+  try {
+    return new URL(image, document.baseURI).href;
+  } catch {
+    return image;
+  }
+}
 import {
   playPause,
   repeat,
@@ -58,8 +69,9 @@ export function PlaylistRemote({
         const trackId = tracks[trackIndex];
         const track = playlists.tracks[trackId];
         if (track) {
-          onPlay(track);
+          // Queue first, so the player sees a playlist switch and uses that fade
           dispatch(startQueue({ tracks, trackId, playlistId: playlist.id }));
+          onPlay(track);
         }
       }
     });
@@ -106,9 +118,10 @@ export function PlaylistRemote({
   useEffect(() => {
     window.player.on("PLAYER_REMOTE_PLAYLIST_GET_ALL_REQUEST", () => {
       window.player.playlistGetAllReply({
-        playlists: playlists.playlists.allIds.map(
-          (id) => playlists.playlists.byId[id]
-        ),
+        playlists: playlists.playlists.allIds.map((id) => ({
+          ...playlists.playlists.byId[id],
+          image: imageOf(playlists.playlists.byId[id].background),
+        })),
         tracks: Object.values(playlists.tracks),
       });
     });

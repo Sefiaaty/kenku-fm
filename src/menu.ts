@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu } from "electron";
+import { app, BrowserWindow, ipcMain, Menu } from "electron";
 
 const isMac = process.platform === "darwin";
 
@@ -92,6 +92,12 @@ const template: any = [
   {
     label: "Window",
     submenu: [
+      {
+        label: "Mini Player",
+        accelerator: isMac ? "Cmd+Shift+M" : "Ctrl+Shift+M",
+        click: () => ipcMain.emit("MINI_PLAYER_TOGGLE"),
+      },
+      { type: "separator" },
       { role: "minimize" },
       { role: "zoom" },
       ...(isMac

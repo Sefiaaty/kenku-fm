@@ -77,6 +77,14 @@ const config = {
               },
             },
             {
+              html: "./src/mini/index.html",
+              js: "./src/mini/renderer.ts",
+              name: "mini_window",
+              preload: {
+                js: "./src/mini/preload.ts",
+              },
+            },
+            {
               html: "./src/audioCapture/index.html",
               js: "./src/audioCapture/renderer.ts",
               name: "audio_capture_window",
